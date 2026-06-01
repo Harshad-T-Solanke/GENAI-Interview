@@ -26,7 +26,7 @@ async function registerUserController(req, res) {
         })
     }
 
-    const hash = await bcrypt.hash(password, 10)
+    const hash = await bcrypt.hash(password, 8)
 
     const user = await userModel.create({
         username,
