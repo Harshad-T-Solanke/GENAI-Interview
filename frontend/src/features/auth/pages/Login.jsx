@@ -4,9 +4,11 @@ import { useNavigate, Link } from 'react-router'
 import { useAuth } from '../hooks/useAuth'
 import { useState } from "react"
 
+
 const Login = () => {
 
     const { loading, handleLogin } = useAuth()
+    const navigate = useNavigate()
 
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
@@ -14,7 +16,8 @@ const Login = () => {
 
     const handleSubmit = async(e) => {
         e.preventDefault()
-        handleLogin({ email, password })
+        await handleLogin({ email, password })
+        navigate('/')
     }
 
     if(loading){
@@ -29,7 +32,7 @@ const Login = () => {
             <form onSubmit={handleSubmit}>
 
                 <div className="input-group">
-                    <label htmlfor="email">Email</label>
+                    <label htmlFor="email">Email</label>
                     <input 
                     onChange={(e) => setEmail(e.target.value)}
                     type="email" id="email" name="email" placeholder="Enter email address" />
