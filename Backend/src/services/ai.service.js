@@ -1,64 +1,137 @@
+
 const { GoogleGenAI } = require("@google/genai");
-const {z} = require("zod")
+const { z } = require("zod");
 const { zodToJsonSchema } = require("zod-to-json-schema");
 
 const ai = new GoogleGenAI({
     apiKey: process.env.GOOGLE_GENAI_API_KEY
-})
-
+});
 
 const interviewReportSchema = z.object({
-    matchScore: z.number().describe("A score indicating how well the candidate's resume matches the job description, on a scale of 0 to 100."),
-    technicalQuestions:
-        z.array(z.object({
-            question: z.string().describe("The technical question can be ask int the interview"),
-            intention: z.string().describe("The intention behind asking the question"),
-            answer: z.string().describe("How to answer the question, what points to cover, what approach to take, etc.")
-        })).describe("A list of technical questions that can be asked in the interview, along with the intention behind asking each question and how to answer them."),
 
+    candidateName: z.string(),
 
-    behavioralQuestions: z.array(z.object({
-        question: z.string().describe("The behavioral question can be asked in the interview"),
-        intention: z.string().describe("The intention behind asking the question"),
-        answer: z.string().describe("How to answer the question, what points to cover, what approach to take, etc.")
-    })).describe("A list of behavioral questions that can be asked in the interview, along with the intention behind asking each question and how to answer them."),
+    overallAssessment: z.string(),
 
-    skillGaps: z.array(z.object({
-        skill: z.string().describe("The skill which the candidate is lacking and needs to improve"),
-        severity: z.enum(["High", "Medium", "Low"]).describe("The severity of the skill gap")
-    })).describe("A list of skill gaps that need to be addressed."),
-    
-    preparationPlan: z.array(z.object({
-    day: z.number().describe("The day number in the preparation plan"),
-    focus: z.string().describe("The main focus or topic to cover on that day"),
-    tasks: z.array(z.string()).describe("A list of specific tasks or activities to complete on that day to prepare for the interview")
-    })).describe("A plan for preparing for the interview.")
-})
+    matchScore: z.number(),
 
+    technicalSkills: z.array(z.string()),
 
-async function generateInterviewReport ({ resume, selfDescription, jobDescription}){
-    const prompt = `Generate an interview report for a candidate based on the following information:
-                    Resume: ${resume}
-                    Self Description: ${selfDescription}
-                    Job Description: ${jobDescription}
-    `
-    try {
-        const response = await ai.models.generateContent({  
-            model: "gemini-2.0-flash",
-            contents: prompt,
-            config:{
-                responseMimeType: "application/json",
-                responseJsonSchema: zodToJsonSchema(interviewReportSchema)
-            }
+    strengths: z.array(z.string()),
+
+    weaknesses: z.array(z.string()),
+
+    extracurricularActivities: z.array(z.string()),
+
+    achievements: z.array(z.string()),
+
+    softSkills: z.array(z.string()),
+
+    technicalQuestions: z.array(
+        z.object({
+            question: z.string(),
+            intention: z.string(),
+            answer: z.string()
         })
-        console.log(JSON.parse(response.text))
-    } catch(err){
-        if(err.status === 429){
-            console.log("Gemini API quota exceeded. Try again tomorrow or upgrade your plan.")
+    ),
+
+    behavioralQuestions: z.array(
+        z.object({
+            question: z.string(),
+            intention: z.string(),
+            answer: z.string()
+        })
+    ),
+
+    skillGaps: z.array(
+        z.object({
+            skill: z.string(),
+            severity: z.enum(["High", "Medium", "Low"])
+        })
+    ),
+
+    preparationPlan: z.array(
+        z.object({
+            day: z.number(),
+            focus: z.string(),
+            tasks: z.array(z.string())
+        })
+    )
+});
+
+async function generateInterviewReport({
+    resume,
+    selfDescription,
+    jobDescription
+}) {
+
+    const prompt = `
+Analyze the candidate professionally based on:
+
+1. Resume
+2. Self Description
+3. Job Description
+
+Resume:
+${resume}
+
+Self Description:
+${selfDescription}
+
+Job Description:
+${jobDescription}
+
+IMPORTANT INSTRUCTIONS:
+- Include extracurricular activities
+- Include technical skills
+- Include achievements
+- Include soft skills
+- Include strengths and weaknesses
+- Include coding activity and learning attitude
+- Include overall candidate assessment
+- Generate professional interview questions
+- Generate preparation roadmap
+- Return response in proper JSON format
+`;
+
+    try {
+
+        const response = await ai.models.generateContent({
+
+            model: "gemini-3-flash-preview",
+
+            contents: prompt,
+
+            config: {
+                responseMimeType: "application/json",
+                responseJsonSchema:
+                    zodToJsonSchema(interviewReportSchema)
+            }
+        });
+
+        const result = JSON.parse(response.text);
+
+        console.log(result);
+
+        return result;
+
+    } catch (err) {
+
+        if (err.status === 429) {
+
+            console.log(
+                "Gemini API quota exceeded."
+            );
+
         } else {
-            console.log("AI Service Error:", err.message)
+
+            console.log(
+                "AI Service Error:",
+                err.message
+            );
         }
     }
 }
 
-module.exports = generateInterviewReport
+module.exports = generateInterviewReport;
+
