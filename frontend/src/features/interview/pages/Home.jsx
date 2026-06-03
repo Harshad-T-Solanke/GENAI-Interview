@@ -29,13 +29,13 @@ const Home = () => {
     return (
         <div className='home-page'>
 
-            
+            {/* Page Header */}
             <header className='page-header'>
                 <h1>Create Your Custom <span className='highlight'>Interview Plan</span></h1>
                 <p>Let our AI analyze the job requirements and your unique profile to build a winning strategy.</p>
             </header>
 
-          
+            {/* Main Card */}
             <div className='interview-card'>
                 <div className='interview-card__body'>
 
@@ -122,7 +122,7 @@ const Home = () => {
                 </div>
             </div>
 
-           
+            {/* Recent Reports List */}
             {reports.length > 0 && (
                 <section className='recent-reports'>
                     <h2>My Recent Interview Plans</h2>
@@ -138,7 +138,7 @@ const Home = () => {
                 </section>
             )}
 
-        
+            
             <footer className='page-footer'>
                 <a href='#'>Privacy Policy</a>
                 <a href='#'>Terms of Service</a>
