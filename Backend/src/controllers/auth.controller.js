@@ -1,9 +1,7 @@
-const { JsonWebTokenError } = require("jsonwebtoken")
 const userModel = require("../models/user.model")
 const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
 const tokenBlacklistModel = require("../models/blacklist.model")
-
 
 
 async function registerUserController(req, res) {
@@ -16,17 +14,17 @@ async function registerUserController(req, res) {
         })
     }
 
-    const isUserAllreadyExists = await userModel.findOne({
-        $or: [{ username: username }, { email: email }]
+    const isUserAlreadyExists = await userModel.findOne({
+        $or: [ { username }, { email } ]
     })
 
-    if (isUserAllreadyExists) {
+    if (isUserAlreadyExists) {
         return res.status(400).json({
-            message: "Account already exist with this email address or username"
+            message: "Account already exists with this email address or username"
         })
     }
 
-    const hash = await bcrypt.hash(password, 8)
+    const hash = await bcrypt.hash(password, 10)
 
     const user = await userModel.create({
         username,
@@ -35,21 +33,25 @@ async function registerUserController(req, res) {
     })
 
     const token = jwt.sign(
-        { id: user.id, username: user.username },
+        { id: user._id, username: user.username },
         process.env.JWT_SECRET,
         { expiresIn: "1d" }
     )
+
     res.cookie("token", token)
 
+
     res.status(201).json({
-        message: "user registered successfully",
+        message: "User registered successfully",
         user: {
             id: user._id,
             username: user.username,
             email: user.email
         }
     })
+
 }
+
 
 async function loginUserController(req, res) {
 
@@ -62,6 +64,7 @@ async function loginUserController(req, res) {
             message: "Invalid email or password"
         })
     }
+
     const isPasswordValid = await bcrypt.compare(password, user.password)
 
     if (!isPasswordValid) {
@@ -71,14 +74,14 @@ async function loginUserController(req, res) {
     }
 
     const token = jwt.sign(
-        { id: user.id, username: user.username },
+        { id: user._id, username: user.username },
         process.env.JWT_SECRET,
         { expiresIn: "1d" }
     )
-    res.cookie("token", token)
 
+    res.cookie("token", token)
     res.status(200).json({
-        message: "user logged in successfully",
+        message: "User loggedIn successfully.",
         user: {
             id: user._id,
             username: user.username,
@@ -87,38 +90,44 @@ async function loginUserController(req, res) {
     })
 }
 
-async function logoutUserController(req, res){
-    const token = req.cookies.token || req.headers.authorization?.split(" ")[1]
 
-    if(token){
+
+async function logoutUserController(req, res) {
+    const token = req.cookies.token
+
+    if (token) {
         await tokenBlacklistModel.create({ token })
     }
 
     res.clearCookie("token")
 
     res.status(200).json({
-        message: "user logged out successfully"
+        message: "User logged out successfully"
     })
-
 }
 
-async function getMeController(req, res){
+async function getMeController(req, res) {
 
     const user = await userModel.findById(req.user.id)
 
+
+
     res.status(200).json({
-        message: "user details fetched successfully",   
-        user:{
+        message: "User details fetched successfully",
+        user: {
             id: user._id,
             username: user.username,
             email: user.email
         }
     })
+
 }
+
+
 
 module.exports = {
     registerUserController,
     loginUserController,
     logoutUserController,
-    getMeController,
+    getMeController
 }
